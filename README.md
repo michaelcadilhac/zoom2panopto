@@ -3,11 +3,11 @@
 ## Summary
 
 This shell script:
-- Fetches the camera and screen streams of a Zoom recording using
-  [yt-dlp](https://github.com/yt-dlp/yt-dlp),
-- Merges the two videos using [ffmpeg](https://ffmpeg.org/),
-- Removes silences using [auto-editor](https://github.com/WyattBlue/auto-editor),
-- Uploads the unedited video and the video with silences removed to Panopto using [their Python examples ](https://github.com/Panopto/upload-python-sample).
+1. Fetches the camera and screen streams of a Zoom recording using
+   [yt-dlp](https://github.com/yt-dlp/yt-dlp),
+2. Merges the two videos using [ffmpeg](https://ffmpeg.org/),
+3. Removes silences using [auto-editor](https://github.com/WyattBlue/auto-editor),
+4. Uploads the unedited video and the video with silences removed to Panopto using [their Python examples ](https://github.com/Panopto/upload-python-sample).
 
 ## Prerequisites
 
