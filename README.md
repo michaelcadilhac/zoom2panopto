@@ -13,14 +13,12 @@ This shell script:
 
 - Python packages:
   ```
-  pip install requests oauthlib requests_oauthlib
-  pip install boto3
+  pip install requests oauthlib requests_oauthlib boto auto-editor
   ```
 - A recent version of [yt-dlp](https://github.com/yt-dlp/yt-dlp).  I use version
   2023-12-30.  Previous versions have trouble listing all the Zoom streams and
   will fail.
 - [ffmpeg](https://ffmpeg.org/).
-- [auto-editor](https://github.com/WyattBlue/auto-editor).
   
 ## Panopto Credentials
 1. Sign in to Panopto web site
