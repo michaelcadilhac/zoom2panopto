@@ -44,7 +44,8 @@ done
 
 ## Command line args
 getfield () {
-    sed -n "s/^$1=//p" $PANOPTO_FILE || { echo "cannot find field $1 in $PANOPTO_FILE"; exit 2 }
+    field=$(sed -n "s/^$1=//p" $PANOPTO_FILE) || { echo "cannot find field $1 in $PANOPTO_FILE"; exit 2 }
+    eval "$2=\$field"
 }
 
 (( $# == 4 )) || { 
@@ -66,10 +67,10 @@ EOF
 name=$1
 cookies=$2
 url=$3
-folderid=$(getfield $4)
-clientid=$(getfield clientid)
-clientsecret=$(getfield clientsecret)
-panoptoserver=$(getfield server)
+getfield $4 folderid
+getfield clientid clientid
+getfield clientsecret clientsecret
+getfield server panoptoserver
 
 tmp=$(mktemp -d)
 cd $tmp
@@ -84,26 +85,32 @@ if ! grep -q 'Calling POST' err; then
   exit 2
 fi
 
-echo "FETCHING ZOOM VIDEOS"
-for f in share view; do
-    yt-dlp -o $f.mp4 -f $f --cookies $cookies $url || exit 2
-done
+fetch_zoom () {
+    yt-dlp -o $1.mp4 -f $1 --cookies $cookies $url
+}
 
-echo "MERGING SHARE/VIEW VIDEOS (hit q to stop midway)..."
-ffmpeg -loglevel warning -i share.mp4 -i view.mp4 -filter_complex "
-  color=size=2240x1080:c=black [background];
-  [0:v] setpts=PTS-STARTPTS, scale=w=1920:h=-1 [slides];
-  [1:v] setpts=PTS-STARTPTS, scale=w=320:h=-1 [speaker];
-  [background][speaker] overlay=shortest=1:x=main_w-overlay_w:y=0 [background+speaker];
-  [background+speaker][slides] overlay=shortest=1 [mix]
-  " -map "[mix]" -map "1:a" merge.mp4 || exit 2
+echo "FETCHING ZOOM VIDEOS"
+if ! fetch_zoom view_with_share; then
+    echo "VIEW WITH SHARE NOT AVAILABLE ON ZOOM; FETCHING VIEW AND SHARE AND MERGING"
+    for f in share view; do
+        fetch_zoom $f || exit 2
+    done
+    echo "MERGING SHARE/VIEW VIDEOS (hit q to stop midway)..."
+    ffmpeg -loglevel warning -i share.mp4 -i view.mp4 -filter_complex "
+        color=size=2240x1080:c=black [background];
+        [0:v] setpts=PTS-STARTPTS, scale=w=1920:h=-1 [slides];
+        [1:v] setpts=PTS-STARTPTS, scale=w=320:h=-1 [speaker];
+        [background][speaker] overlay=shortest=1:x=main_w-overlay_w:y=0 [background+speaker];
+        [background+speaker][slides] overlay=shortest=1 [mix]
+        " -map "[mix]" -map "1:a" view_with_share.mp4 || exit 2
+fi
 
 ## Remove blanks
 echo "STRIPPING SILENCES"
-auto-editor --no-open merge.mp4 || exit 2
+auto-editor --no-open view_with_share.mp4 || exit 2
 
-mv merge.mp4 "$name unedited.mp4"
-mv merge_ALTERED.mp4 "$name.mp4"
+mv view_with_share.mp4 "$name unedited.mp4"
+mv view_with_share_ALTERED.mp4 "$name.mp4"
 
 ## Upload in Panopto
 echo "UPLOADING TO PANOPTO"
